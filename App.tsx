@@ -336,6 +336,11 @@ const App: React.FC = () => {
           {!video && !isUrlModalOpen && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
               <div className="p-8 bg-slate-900/80 backdrop-blur-md rounded-3xl border border-white/10 text-center max-w-md shadow-2xl pointer-events-auto">
+                <img 
+                  src="https://github.com/plasticarm/CINopticFulldomePlayer/blob/main/images/Cinoptic_logo1@0.25x.png?raw=true" 
+                  alt="CINoptic Logo" 
+                  className="mx-auto mb-6 w-full max-w-[200px] object-contain"
+                />
                 <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-4 tracking-tighter">CINoptic FULL DOME</h1>
                 <p className="text-slate-300 mb-8 text-sm leading-relaxed">Experience immersive <b>Dome Master</b> media. Upload locally or provide a remote stream.</p>
                 <div className="flex flex-col gap-3">
