@@ -1,0 +1,8 @@
+{
+  "name": "CINoptic Dome VR",
+  "description": "A high-fidelity immersive planetarium simulator that projects local video files onto a 3D hemisphere, fully VR-compatible for a seated dome experience.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
