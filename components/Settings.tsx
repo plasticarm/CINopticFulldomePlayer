@@ -12,6 +12,34 @@ interface SettingsProps {
   currentVideoUrl?: string;
   projectionMode: 'dome' | 'flat';
   onProjectionModeChange: (mode: 'dome' | 'flat') => void;
+  smoothFovChange: boolean;
+  onSmoothFovChangeToggle: (val: boolean) => void;
+  useQuaternionRotation: boolean;
+  onUseQuaternionRotationChange: (val: boolean) => void;
+  ambientIntensity: number;
+  onAmbientIntensityChange: (val: number) => void;
+  ambientFalloff: number;
+  onAmbientFalloffChange: (val: number) => void;
+  restrictViewToEdge: boolean;
+  onRestrictViewToEdgeChange: (val: boolean) => void;
+  edgePadding: number;
+  onEdgePaddingChange: (val: number) => void;
+  allowCameraRoll: boolean;
+  onAllowCameraRollChange: (val: boolean) => void;
+  vignette: number;
+  onVignetteChange: (val: number) => void;
+  bloom: number;
+  onBloomChange: (val: number) => void;
+  edgeBlur: number;
+  onEdgeBlurChange: (val: number) => void;
+  edgeChokeOpacity: number;
+  onEdgeChokeOpacityChange: (val: number) => void;
+  antialiasing: boolean;
+  onAntialiasingChange: (val: boolean) => void;
+  bookmarks: { id: string, name: string, url: string }[];
+  onAddBookmark: () => void;
+  onRemoveBookmark: (id: string) => void;
+  onSelectBookmark: (url: string) => void;
 }
 
 const Settings: React.FC<SettingsProps> = ({ 
@@ -24,7 +52,35 @@ const Settings: React.FC<SettingsProps> = ({
   showMotionButton,
   currentVideoUrl,
   projectionMode,
-  onProjectionModeChange
+  onProjectionModeChange,
+  smoothFovChange,
+  onSmoothFovChangeToggle,
+  useQuaternionRotation,
+  onUseQuaternionRotationChange,
+  ambientIntensity,
+  onAmbientIntensityChange,
+  ambientFalloff,
+  onAmbientFalloffChange,
+  restrictViewToEdge,
+  onRestrictViewToEdgeChange,
+  edgePadding,
+  onEdgePaddingChange,
+  allowCameraRoll,
+  onAllowCameraRollChange,
+  vignette,
+  onVignetteChange,
+  bloom,
+  onBloomChange,
+  edgeBlur,
+  onEdgeBlurChange,
+  edgeChokeOpacity,
+  onEdgeChokeOpacityChange,
+  antialiasing,
+  onAntialiasingChange,
+  bookmarks,
+  onAddBookmark,
+  onRemoveBookmark,
+  onSelectBookmark
 }) => {
   const [copied, setCopied] = useState(false);
   const [autoplayEnabled, setAutoplayEnabled] = useState(true);
@@ -80,6 +136,152 @@ const Settings: React.FC<SettingsProps> = ({
           </div>
         </div>
 
+        {/* Smooth FOV Change Toggle */}
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Smooth FOV Change</span>
+            <button 
+              onClick={() => onSmoothFovChangeToggle(!smoothFovChange)}
+              className="flex items-center gap-2 group"
+            >
+              <div className={`w-8 h-4 rounded-full relative transition-colors ${smoothFovChange ? 'bg-purple-600' : 'bg-slate-800'}`}>
+                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${smoothFovChange ? 'left-4.5' : 'left-0.5'}`}></div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Quaternion Rotation Toggle */}
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Quaternion Rotation</span>
+            <button 
+              onClick={() => onUseQuaternionRotationChange(!useQuaternionRotation)}
+              className="flex items-center gap-2 group"
+            >
+              <div className={`w-8 h-4 rounded-full relative transition-colors ${useQuaternionRotation ? 'bg-purple-600' : 'bg-slate-800'}`}>
+                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${useQuaternionRotation ? 'left-4.5' : 'left-0.5'}`}></div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Restrict View to Edge Toggle */}
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Restrict View to Edge</span>
+            <button 
+              onClick={() => onRestrictViewToEdgeChange(!restrictViewToEdge)}
+              className="flex items-center gap-2 group"
+            >
+              <div className={`w-8 h-4 rounded-full relative transition-colors ${restrictViewToEdge ? 'bg-purple-600' : 'bg-slate-800'}`}>
+                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${restrictViewToEdge ? 'left-4.5' : 'left-0.5'}`}></div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {restrictViewToEdge && (
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Edge Padding</span>
+              <span className="text-[10px] font-mono text-white/40">{edgePadding.toFixed(1)}°</span>
+            </div>
+            <input 
+              type="range" min="0" max="30" step="0.5"
+              value={edgePadding}
+              onChange={(e) => onEdgePaddingChange(parseFloat(e.target.value))}
+              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+            />
+          </div>
+        )}
+
+        {/* Allow Camera Roll Toggle */}
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Allow Camera Roll</span>
+            <button 
+              onClick={() => onAllowCameraRollChange(!allowCameraRoll)}
+              className="flex items-center gap-2 group"
+            >
+              <div className={`w-8 h-4 rounded-full relative transition-colors ${allowCameraRoll ? 'bg-purple-600' : 'bg-slate-800'}`}>
+                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${allowCameraRoll ? 'left-4.5' : 'left-0.5'}`}></div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Post Processing Effects */}
+        <div className="flex flex-col gap-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Post Processing</span>
+          
+          <div className="flex flex-col gap-2 pl-2 border-l-2 border-purple-900/50">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Vignette</span>
+              <span className="text-[10px] font-bold text-slate-500">{Math.round(vignette * 100)}%</span>
+            </div>
+            <input 
+              type="range" 
+              min="-1" max="1" step="0.01" 
+              value={vignette} 
+              onChange={(e) => onVignetteChange(parseFloat(e.target.value))}
+              className="w-full accent-purple-500 bg-slate-800 rounded-lg appearance-none h-1.5"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2 pl-2 border-l-2 border-purple-900/50">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Bloom</span>
+              <span className="text-[10px] font-bold text-slate-500">{Math.round((bloom / 15) * 100)}%</span>
+            </div>
+            <input 
+              type="range" 
+              min="0" max="15" step="0.1" 
+              value={bloom} 
+              onChange={(e) => onBloomChange(parseFloat(e.target.value))}
+              className="w-full accent-purple-500 bg-slate-800 rounded-lg appearance-none h-1.5"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2 pl-2 border-l-2 border-purple-900/50">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Edge Blur</span>
+              <span className="text-[10px] font-bold text-slate-500">{Math.round(edgeBlur * 100)}%</span>
+            </div>
+            <input 
+              type="range" 
+              min="0" max="1" step="0.01" 
+              value={edgeBlur} 
+              onChange={(e) => onEdgeBlurChange(parseFloat(e.target.value))}
+              className="w-full accent-purple-500 bg-slate-800 rounded-lg appearance-none h-1.5"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2 pl-2 border-l-2 border-purple-900/50">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Edge Choke</span>
+              <span className="text-[10px] font-bold text-slate-500">{Math.round(edgeChokeOpacity * 100)}%</span>
+            </div>
+            <input 
+              type="range" 
+              min="0" max="1" step="0.01" 
+              value={edgeChokeOpacity} 
+              onChange={(e) => onEdgeChokeOpacityChange(parseFloat(e.target.value))}
+              className="w-full accent-purple-500 bg-slate-800 rounded-lg appearance-none h-1.5"
+            />
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-bold text-slate-300">Antialiasing (SMAA)</span>
+            <button
+              onClick={() => onAntialiasingChange(!antialiasing)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${antialiasing ? 'bg-purple-500' : 'bg-slate-700'}`}
+            >
+              <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${antialiasing ? 'translate-x-5' : 'translate-x-1'}`} />
+            </button>
+          </div>
+        </div>
+
         {showMotionButton && (
           <div className="flex flex-col gap-3">
             <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Motion Controls</span>
@@ -108,6 +310,71 @@ const Settings: React.FC<SettingsProps> = ({
           />
         </div>
 
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Ambient Light Spill</span>
+            <span className="text-[10px] font-mono text-white/40">{Math.round(ambientIntensity * 100)}%</span>
+          </div>
+          <input 
+            type="range" min="0" max="2" step="0.05"
+            value={ambientIntensity}
+            onChange={(e) => onAmbientIntensityChange(parseFloat(e.target.value))}
+            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+          />
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Spill Falloff</span>
+            <span className="text-[10px] font-mono text-white/40">{ambientFalloff.toFixed(1)}</span>
+          </div>
+          <input 
+            type="range" min="1" max="50" step="0.5"
+            value={ambientFalloff}
+            onChange={(e) => onAmbientFalloffChange(parseFloat(e.target.value))}
+            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+          />
+        </div>
+
+        {/* Bookmarks */}
+        <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Bookmarks</span>
+            <button 
+              onClick={onAddBookmark}
+              disabled={!currentVideoUrl}
+              className="text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+            >
+              + Save Current
+            </button>
+          </div>
+          {bookmarks.length === 0 ? (
+            <p className="text-[10px] text-white/30 italic">No bookmarks saved.</p>
+          ) : (
+            <div className="flex flex-col gap-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
+              {bookmarks.map((bookmark) => (
+                <div key={bookmark.id} className="flex justify-between items-center bg-slate-800/50 rounded-lg p-2 border border-white/5 group hover:border-purple-500/30 transition-colors">
+                  <button 
+                    onClick={() => onSelectBookmark(bookmark.url)}
+                    className="flex-1 text-left flex flex-col min-w-0 mr-2"
+                  >
+                    <span className="text-[11px] font-bold text-slate-200 truncate">{bookmark.name}</span>
+                    <span className="text-[9px] text-slate-500 truncate">{bookmark.url.startsWith('blob:') ? 'Local File' : bookmark.url}</span>
+                  </button>
+                  <button 
+                    onClick={() => onRemoveBookmark(bookmark.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1 text-red-400 hover:text-red-300 transition-all shrink-0"
+                    title="Remove Bookmark"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Embed Simulator */}
         <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
           <div className="flex justify-between items-center mb-1">
             <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Embed Simulator</span>
