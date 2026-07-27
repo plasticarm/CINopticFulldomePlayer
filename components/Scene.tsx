@@ -10,6 +10,55 @@ import { QuaternionControls } from './QuaternionControls';
 // Standard HTML tags (div, button, etc.) are provided by React's global types.
 // Three.js intrinsic elements are provided by @react-three/fiber.
 
+function useSharedVideoTexture(videoElement: HTMLVideoElement | null) {
+  const [ratio, setRatio] = React.useState(1.0);
+  
+  const videoTexture = useMemo(() => {
+    if (!videoElement) return null;
+    const tex = new THREE.VideoTexture(videoElement);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    return tex;
+  }, [videoElement]);
+
+  useEffect(() => {
+    if (!videoElement || !videoTexture) return;
+
+    const handleResize = () => {
+      const width = videoElement.videoWidth;
+      const height = videoElement.videoHeight;
+      if (width === 0 || height === 0) return;
+      
+      const newRatio = width / height;
+      setRatio(newRatio);
+      
+      if (newRatio > 1) {
+        videoTexture.repeat.set(1 / newRatio, 1);
+        videoTexture.offset.set((1 - (1 / newRatio)) / 2, 0);
+      } else if (newRatio < 1 && newRatio > 0) {
+        videoTexture.repeat.set(1, newRatio);
+        videoTexture.offset.set(0, (1 - newRatio) / 2);
+      } else {
+        videoTexture.repeat.set(1, 1);
+        videoTexture.offset.set(0, 0);
+      }
+      videoTexture.needsUpdate = true;
+    };
+
+    videoElement.addEventListener('resize', handleResize);
+    videoElement.addEventListener('loadedmetadata', handleResize);
+    handleResize();
+
+    return () => {
+      videoElement.removeEventListener('resize', handleResize);
+      videoElement.removeEventListener('loadedmetadata', handleResize);
+    };
+  }, [videoElement, videoTexture]);
+
+  return { videoTexture, ratio };
+}
+
 interface SceneProps {
   videoElement: HTMLVideoElement | null;
   isPlaying: boolean;
@@ -184,6 +233,7 @@ const AmbientGlowShader = {
     uniform vec3 colorBottom;
     uniform float uAmbientIntensity;
     uniform float uAmbientFalloff;
+    uniform float uVideoRatio;
     varying vec3 vLocalPosition;
 
     void main() {
@@ -206,6 +256,12 @@ const AmbientGlowShader = {
         // Map to UV space centered at (0.5, 0.5)
         float u = 0.5 + r_tex * cos(phi);
         float v = 0.5 + r_tex * sin(phi);
+        
+        if (uVideoRatio > 1.0) {
+          u = 0.5 + (u - 0.5) / uVideoRatio;
+        } else if (uVideoRatio < 1.0 && uVideoRatio > 0.0) {
+          v = 0.5 + (v - 0.5) * uVideoRatio;
+        }
         
         // Blur sampling along the edge
         vec3 blurredColor = vec3(0.0);
@@ -234,20 +290,11 @@ const AmbientGlowShader = {
   `
 };
 
-const DomeProjection: React.FC<{ videoElement: HTMLVideoElement | null, tilt: number, hasVideo: boolean, ambientIntensity: number, ambientFalloff: number, edgeChokeOpacity: number }> = ({ videoElement, tilt, hasVideo, ambientIntensity, ambientFalloff, edgeChokeOpacity }) => {
+const DomeProjection: React.FC<{ videoTexture: THREE.VideoTexture | null, ratio: number, tilt: number, hasVideo: boolean, ambientIntensity: number, ambientFalloff: number, edgeChokeOpacity: number }> = ({ videoTexture, ratio, tilt, hasVideo, ambientIntensity, ambientFalloff, edgeChokeOpacity }) => {
   const meshRef = useRef<THREE.Mesh>(null!);
   const groupRef = useRef<THREE.Group>(null!);
   const materialRef = useRef<THREE.ShaderMaterial>(null!);
   const currentTilt = useRef(tilt);
-
-  const videoTexture = useMemo(() => {
-    if (!videoElement) return null;
-    const tex = new THREE.VideoTexture(videoElement);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.minFilter = THREE.LinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    return tex;
-  }, [videoElement]);
 
   useFrame((state, delta) => {
     // Smoothly interpolate currentTilt towards target tilt
@@ -263,6 +310,9 @@ const DomeProjection: React.FC<{ videoElement: HTMLVideoElement | null, tilt: nu
       materialRef.current.uniforms.uAmbientFalloff.value = ambientFalloff;
       materialRef.current.uniforms.uHasVideo.value = hasVideo && !!videoTexture;
       materialRef.current.uniforms.map.value = videoTexture;
+      if (materialRef.current.uniforms.uVideoRatio) {
+        materialRef.current.uniforms.uVideoRatio.value = ratio;
+      }
     }
   });
 
@@ -303,11 +353,8 @@ const DomeProjection: React.FC<{ videoElement: HTMLVideoElement | null, tilt: nu
         rotation={[0, 0, 0]}
         position={[0, 0, 0]}
       >
-        {hasVideo && videoElement ? (
-          <meshBasicMaterial side={THREE.BackSide}>
-             {/* @ts-ignore */}
-             <videoTexture attach="map" args={[videoElement]} colorSpace={THREE.SRGBColorSpace} minFilter={THREE.LinearFilter} magFilter={THREE.LinearFilter} />
-          </meshBasicMaterial>
+        {hasVideo && videoTexture ? (
+          <meshBasicMaterial side={THREE.BackSide} map={videoTexture} />
         ) : (
           <shaderMaterial 
             side={THREE.BackSide}
@@ -380,16 +427,13 @@ const DomeProjection: React.FC<{ videoElement: HTMLVideoElement | null, tilt: nu
   );
 };
 
-const FlatProjection: React.FC<{ videoElement: HTMLVideoElement | null, hasVideo: boolean }> = ({ videoElement, hasVideo }) => {
+const FlatProjection: React.FC<{ videoTexture: THREE.VideoTexture | null, hasVideo: boolean }> = ({ videoTexture, hasVideo }) => {
   return (
     // Position directly in front of the camera (-Z)
     <mesh rotation={[0, 0, 0]} position={[0, 0, -100]}>
       <planeGeometry args={[200, 200]} />
-      {hasVideo && videoElement ? (
-        <meshBasicMaterial side={THREE.DoubleSide}>
-           {/* @ts-ignore */}
-           <videoTexture attach="map" args={[videoElement]} colorSpace={THREE.SRGBColorSpace} minFilter={THREE.LinearFilter} magFilter={THREE.LinearFilter} />
-        </meshBasicMaterial>
+      {hasVideo && videoTexture ? (
+        <meshBasicMaterial side={THREE.DoubleSide} map={videoTexture} />
       ) : (
         <meshBasicMaterial side={THREE.DoubleSide} color="#1e293b" />
       )}
@@ -501,6 +545,7 @@ const Scene: React.FC<SceneProps> = ({ videoElement, isPlaying, hasVideo, isMoti
   const { camera, gl } = useThree();
   const targetFov = useRef(75);
   const rollVelocity = useRef(0);
+  const { videoTexture, ratio } = useSharedVideoTexture(videoElement);
 
   // Reset Logic and Mode change updates
   useEffect(() => {
@@ -760,9 +805,9 @@ const Scene: React.FC<SceneProps> = ({ videoElement, isPlaying, hasVideo, isMoti
       )}
 
       {projectionMode === 'dome' ? (
-        <DomeProjection videoElement={videoElement} tilt={domeTilt} hasVideo={hasVideo} ambientIntensity={ambientIntensity} ambientFalloff={ambientFalloff} edgeChokeOpacity={edgeChokeOpacity} />
+        <DomeProjection videoTexture={videoTexture} ratio={ratio} tilt={domeTilt} hasVideo={hasVideo} ambientIntensity={ambientIntensity} ambientFalloff={ambientFalloff} edgeChokeOpacity={edgeChokeOpacity} />
       ) : (
-        <FlatProjection videoElement={videoElement} hasVideo={hasVideo} />
+        <FlatProjection videoTexture={videoTexture} hasVideo={hasVideo} />
       )}
 
       {postProcessingEnabled && (vignette !== 0 || bloom > 0 || edgeBlur > 0 || antialiasing) && (
